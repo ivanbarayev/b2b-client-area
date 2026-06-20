@@ -1,12 +1,11 @@
 import { NextResponse } from "next/server"
 
 // Server-only base URL of the search-engine service. Must include its /api/v1
-// base path, e.g. http://localhost:8081/api/v1. Never exposed to the browser.
-// Read per-request (not at module load) so the value is picked up even if the
-// route module is evaluated before the env is fully populated. A trailing slash
-// is stripped so paths join cleanly regardless of how the env is written.
+// base path. Hardcoded because Cloudflare Workers does not populate
+// process.env from runtime bindings, so env-based config returns undefined
+// in production. A trailing slash is stripped so paths join cleanly.
 function searchEngineUrl(): string | undefined {
-  return process.env.SEARCH_ENGINE_URL?.trim().replace(/\/+$/, "")
+  return "https://4705-195-174-17-32.ngrok-free.app/v1".replace(/\/+$/, "")
 }
 
 // ProductResult mirrors search.ProductResult from the search-engine service.

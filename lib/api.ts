@@ -1,4 +1,4 @@
-const BASE_URL = process.env.NEXT_PUBLIC_API_URL!
+const BASE_URL = "https://2bed-195-174-17-32.ngrok-free.app/v1"
 
 const PLATFORM_HEADER = { "x-platform": "web" } as const
 
