@@ -188,10 +188,10 @@ function applyTheme(id: ThemeId) {
 }
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
-  const [theme, setThemeState] = useState<ThemeId>("default")
+  const [theme, setThemeState] = useState<ThemeId>("crimson")
 
   useEffect(() => {
-    const stored = (localStorage.getItem(STORAGE_KEY) as ThemeId) ?? "default"
+    const stored = (localStorage.getItem(STORAGE_KEY) as ThemeId) ?? "crimson"
     setThemeState(stored)
     applyTheme(stored)
   }, [])
