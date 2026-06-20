@@ -2,7 +2,12 @@ import { NextResponse } from "next/server"
 
 // Server-only base URL of the search-engine service. Must include its /api/v1
 // base path, e.g. http://localhost:8081/api/v1. Never exposed to the browser.
-const SEARCH_ENGINE_URL = process.env.SEARCH_ENGINE_URL
+// Read per-request (not at module load) so the value is picked up even if the
+// route module is evaluated before the env is fully populated. A trailing slash
+// is stripped so paths join cleanly regardless of how the env is written.
+function searchEngineUrl(): string | undefined {
+  return process.env.SEARCH_ENGINE_URL?.trim().replace(/\/+$/, "")
+}
 
 // ProductResult mirrors search.ProductResult from the search-engine service.
 type ProductResult = {
@@ -30,12 +35,13 @@ type Envelope = { data: ProductResult[] | null; error: boolean; message: string 
 const SUPPLIER_TIMEOUT_MS = 15_000
 
 async function searchDomain(
+  baseUrl: string,
   domain: "altay" | "martas",
   q: string,
   authorization: string,
 ): Promise<ProductResult[]> {
   const res = await fetch(
-    `${SEARCH_ENGINE_URL}/${domain}/products/search?q=${encodeURIComponent(q)}`,
+    `${baseUrl}/${domain}/products/search?q=${encodeURIComponent(q)}`,
     {
       // The search-engine guards these routes with the same JWT the client holds.
       headers: { Authorization: authorization },
@@ -59,7 +65,8 @@ export async function GET(req: Request) {
   if (!q) {
     return NextResponse.json({ data: null, error: true, message: "search query required" }, { status: 400 })
   }
-  if (!SEARCH_ENGINE_URL) {
+  const baseUrl = searchEngineUrl()
+  if (!baseUrl) {
     return NextResponse.json(
       { data: null, error: true, message: "search engine not configured" },
       { status: 500 },
@@ -76,8 +83,8 @@ export async function GET(req: Request) {
 
   // Fan out to both suppliers in parallel; one failing supplier must not sink the whole search.
   const [altay, martas] = await Promise.allSettled([
-    searchDomain("altay", q, authorization),
-    searchDomain("martas", q, authorization),
+    searchDomain(baseUrl, "altay", q, authorization),
+    searchDomain(baseUrl, "martas", q, authorization),
   ])
 
   const data: ProductResult[] = [
